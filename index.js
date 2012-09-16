@@ -1,19 +1,23 @@
-var everyAuth = require('everyauth')
-var connect = require('connect')
-var express = require('express')
+var everyAuth = require('everyauth'),
+	connect = require('connect'),
+	express = require('express'),
+	Promise = everyAuth.Promise;
 
 everyAuth.debug = true;
 
-console.log('Authenticate')
+// https://github.com/bnoguchi/everyauth/issues/184
 everyAuth.googlehybrid
-	.myHostname('http://nexusplus.devapp.com:5000')
+	.myHostname('http://www.everyauthdemo.com:5000')
 	.consumerKey('nexusplus.herokuapp.com')
 	.consumerSecret('QQZy6f24BjIOYQkE_fnRAbK6')
-	.scope(['https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile'])
+	.scope(['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'])
 	.findOrCreateUser(function(session, userAttributes) {
 			console.log('findOrCreateUser')
 			console.log('userAttributes', userAttributes)
-			return usersByGoogleHybridId[userAttributes.claimedIdentifier] || (usersByGoogleHybridId[userAttributes.claimedIdentifier] = addUser('googlehybrid', userAttributes))
+			var promise = new Promise();
+			promise.fulfill(userAttributes);
+			return promise;
+			// usersByGoogleHybridId[userAttributes.claimedIdentifier] || (usersByGoogleHybridId[userAttributes.claimedIdentifier] = addUser('googlehybrid', userAttributes))
 
 	})
 	.redirectPath('/')
@@ -22,7 +26,7 @@ app = module.exports = express.createServer();
 app.configure(function(){
 	// # Register view engine
 	app.register('.html', require('ejs'))
-	
+
 	// # App Configuration
 	app.set('views', __dirname + "/public")
 	app.set('view engine', 'html')
@@ -38,10 +42,14 @@ app.configure(function(){
 	
 });
 
+app.get('/auth/googlehybrid/callback', function(req, res) {
+	console.log('user authenticated');
+});
+
 app.get('/', function (req, res) {
   res.render('login');
 });
 
-port = process.env.PORT || 2000
+port = process.env.PORT || 5000
 app.listen(port)
 console.log("Express server listening on port %d in %s mode", port, app.settings.env)
